@@ -18,11 +18,11 @@ import axios from "axios";
 import PageSelect from "./PageSelect";
 import Dialogs from "./Dialogs";
 import { diffChars } from "diff";
-import delete_icon from "/public/icons/delete.png";
+import delete_icon from "/icons/delete.png";
 import AddNewPage from "./AddNewPage";
 import DeletePage from "./DeletePage";
 
-function TextManagerView() {
+function TextManagerView({selectedWebsiteBucket}) {
   const [languages, setLanguages] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [content, setContent] = useState({});
@@ -44,7 +44,7 @@ function TextManagerView() {
 
   const fetchPages = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/web_gcp/folders`);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/web_gcp/folders/${selectedWebsiteBucket}`);
       setPages(response.data);
       setSelectedPageId(response.data[0] || "");
     } catch (error) {
@@ -57,7 +57,7 @@ function TextManagerView() {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://localhost:3001/web_gcp/content/${pageId}`
+        `${import.meta.env.VITE_BACKEND_URL}/web_gcp/content/${selectedWebsiteBucket}/${pageId}`
       );
       const contentData = response.data;
       setContent(contentData);
@@ -93,7 +93,7 @@ function TextManagerView() {
     setLoading(true);
     try {
       const initialContentObject = JSON.parse(initialContent);
-      await axios.post("http://localhost:3001/web_gcp/folders", {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/web_gcp/folders/${selectedWebsiteBucket}`, {
         pageId,
         initialContent: initialContentObject,
       });
@@ -109,7 +109,7 @@ function TextManagerView() {
   const handleDeletePage = async (pageId) => {
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:3001/web_gcp/content/${pageId}`);
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/web_gcp/content/${selectedWebsiteBucket}/${pageId}`);
       setSuccessMessage("Page deleted successfully!");
       fetchPages(); // Refresh the list of pages
       if (pageId === selectedPageId) {
@@ -126,7 +126,7 @@ function TextManagerView() {
     setLoading(true);
     try {
       await axios.post(
-        `http://localhost:3001/web_gcp/content/${selectedPageId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/web_gcp/content/${selectedWebsiteBucket}/${selectedPageId}`,
         content
       );
       setSuccessMessage("Content updated successfully!");

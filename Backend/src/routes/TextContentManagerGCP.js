@@ -4,16 +4,16 @@ const Page = require("../models/Page");
 const router = express.Router();
 
 const storage = new Storage({ keyFilename: "./key.json" });
-const bucketName = "igot_karmayogi"; // Replace with your GCS bucket name
 const folderName = "website_text_content"; // Replace with your folder name in GCS
 
-const bucket = storage.bucket(bucketName);
-
 // Route to fetch folder names and subfolders/files for a specific folder
-router.get("/folders", async (req, res) => {
+router.get("/folders/:bucketName", async (req, res) => {
+  const { bucketName } = req.params;
+  const bucket = storage.bucket(bucketName);
+  
   try {
     const options = {
-      prefix: `website_text_content/`,
+      prefix: `${folderName}/`,
       delimiter: "./"
     };
 
@@ -38,9 +38,10 @@ router.get("/folders", async (req, res) => {
   }
 });
 
-router.post("/content/:pageId", async (req, res) => {
-  const { pageId } = req.params;
+router.post("/content/:bucketName/:pageId", async (req, res) => {
+  const { bucketName, pageId } = req.params;
   const newContent = req.body;
+  const bucket = storage.bucket(bucketName);
 
   try {
     // Find page metadata in MongoDB
@@ -73,8 +74,9 @@ router.post("/content/:pageId", async (req, res) => {
   }
 });
 
-router.get("/content/:pageId", async (req, res) => {
-  const { pageId } = req.params;
+router.get("/content/:bucketName/:pageId", async (req, res) => {
+  const { bucketName, pageId } = req.params;
+  const bucket = storage.bucket(bucketName);
 
   try {
     // Find page metadata in MongoDB
@@ -97,8 +99,10 @@ router.get("/content/:pageId", async (req, res) => {
   }
 });
 
-router.post("/folders", async (req, res) => {
+router.post("/folders/:bucketName", async (req, res) => {
+  const { bucketName } = req.params;
   const { pageId, initialContent } = req.body;
+  const bucket = storage.bucket(bucketName);
 
   try {
     const file_path = `${folderName}/${pageId}/${pageId}.json`;
@@ -117,8 +121,9 @@ router.post("/folders", async (req, res) => {
 });
 
 // Route to delete a page
-router.delete("/content/:pageId", async (req, res) => {
-  const { pageId } = req.params;
+router.delete("/content/:bucketName/:pageId", async (req, res) => {
+  const { bucketName, pageId } = req.params;
+  const bucket = storage.bucket(bucketName);
 
   try {
     // Find page metadata in MongoDB
@@ -143,7 +148,5 @@ router.delete("/content/:pageId", async (req, res) => {
     res.status(500).send("Internal server error");
   }
 });
-
-
 
 module.exports = router;

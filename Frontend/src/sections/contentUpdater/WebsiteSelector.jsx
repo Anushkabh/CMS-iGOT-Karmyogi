@@ -10,9 +10,14 @@ export default function WebsiteSelector({
   websites,
   selectedWebsite,
   setSelectedWebsite,
+  setSelectedWebsiteBucket,
 }) {
   const handleChange = (event) => {
-    setSelectedWebsite(event.target.value);
+    const selectedWebsite = websites.find(
+      (website) => website.url === event.target.value
+    );
+    setSelectedWebsite(selectedWebsite.url);
+    setSelectedWebsiteBucket(selectedWebsite.bucketName);
   };
 
   return (
@@ -41,8 +46,10 @@ WebsiteSelector.propTypes = {
       id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
       url: PropTypes.string.isRequired,
+      bucketName: PropTypes.string.isRequired, // Ensure this is included in the shape
     })
   ).isRequired,
   selectedWebsite: PropTypes.string.isRequired,
   setSelectedWebsite: PropTypes.func.isRequired,
+  setSelectedWebsiteBucket: PropTypes.func.isRequired, // Ensure this is included in the prop types
 };
