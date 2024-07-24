@@ -19,7 +19,7 @@ export default function WebsiteSelector({
     setSelectedWebsite(selectedWebsite.url);
     setSelectedWebsiteBucket(selectedWebsite.bucketName);
   };
-  S;
+
   return (
     <FormControl fullWidth variant="outlined" sx={{ mb: 4 }}>
       <InputLabel id="website-select-label">Select Website</InputLabel>
