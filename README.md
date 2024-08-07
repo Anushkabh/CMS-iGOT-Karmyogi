@@ -1,7 +1,7 @@
 # CMS
 
 ## Project Overview
-Karmayogi CMS is a Content Management System designed to integrate seamlessly with the iGOT Platform’s multiple portals (Learner, MDO, SPV, etc.). This CMS empowers State Project Managers (SPVs) with the ability to update various media content dynamically, enhancing flexibility and customization options without the need for full code deployments.
+Karmyogi CMS is a Content Management System designed to integrate seamlessly with the iGOT Platform’s multiple portals (Learner, MDO, SPV, etc.). This CMS empowers State Project Managers (SPVs) with the ability to update various media content dynamically, enhancing flexibility and customization options without the need for full code deployments.
 
 ## Features
 - **Media Content Updates:**
