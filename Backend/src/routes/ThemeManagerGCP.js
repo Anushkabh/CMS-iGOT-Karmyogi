@@ -2,6 +2,7 @@ const express = require("express");
 const { Storage } = require("@google-cloud/storage");
 const multer = require("multer");
 const router = express.Router();
+const Theme = require('../models/Theme');
 
 const storage = new Storage({ keyFilename: "./key.json" });
 const mediaFolderName = "theme_manager_Store"; // The main folder for Theme Manager
@@ -63,9 +64,53 @@ router.post("/setTheme/:bucketName/:sourceFolderName", async (req, res) => {
 
     await Promise.all(copyPromises);
 
+    const theme = await Theme.findOne({ website: bucketName });
+
+
+    if (theme) {
+      // If theme entry exists, update currentTheme and push to history
+      theme.history.push({
+        theme: theme.currentTheme,
+        dateSet: new Date()
+      });
+      theme.currentTheme = sourceFolderName;
+      await theme.save();
+    } else {
+      // If no entry exists, create a new one
+      const newTheme = new Theme({
+        website: bucketName,
+        currentTheme: sourceFolderName,
+        history: [{ theme: sourceFolderName, dateSet: new Date() }]
+      });
+      await newTheme.save();
+    }
+
+
+
     res.status(200).send("Theme set successfully by copying files to 'current_theme'.");
   } catch (err) {
     console.error("Error setting theme:", err);
+    res.status(500).send(`Internal server error: ${err.message}`);
+  }
+});
+
+// Route to fetch theme details for a specific website (bucketName)
+router.get("/getThemeDetails/:bucketName", async (req, res) => {
+  const { bucketName } = req.params;
+
+  try {
+    // Find the theme details for the specified website (bucketName)
+    const themeDetails = await Theme.findOne({ website: bucketName });
+
+    if (!themeDetails) {
+      // If no theme details found, send a 404 response
+      return res.status(404).send(`No theme details found for website: ${bucketName}`);
+    }
+
+    // If theme details found, send them back in the response
+    res.status(200).json(themeDetails);
+  } catch (err) {
+    console.error("Error fetching theme details:", err);
     res.status(500).send(`Internal server error: ${err.message}`);
   }
 });
