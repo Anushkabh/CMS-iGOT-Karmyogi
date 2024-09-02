@@ -30,14 +30,38 @@ function ThemeManager({ selectedWebsiteBucket }) {
   const [loadingSetTheme, setLoadingSetTheme] = useState(false);
   const [loadingFetchContent, setLoadingFetchContent] = useState(false);
 
+  // State for new detail fetching
+  const [loadingFetchDetail, setLoadingFetchDetail] = useState(false);
+  const [detailContent, setDetailContent] = useState(null);
+
   useEffect(() => {
     fetchPages();
+    fetchDetail();
   }, [selectedWebsiteBucket]);
 
   useEffect(() => {
     setShowAddNewFileDialog(false);
     setFolderContent(null);
   }, [selectedPageId, setSelectedThemeId]);
+
+  // New function to fetch details
+  const fetchDetail = async () => {
+    setLoadingFetchDetail(true);
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/getThemeDetails/${selectedWebsiteBucket}`
+      );
+      console.log(response.data);
+      setDetailContent(response.data);
+      setSuccessMessage("Details fetched successfully!");
+    } catch (error) {
+      console.error("Error fetching details:", error);
+      setError("Failed to fetch details. Please try again.");
+    }
+    setLoadingFetchDetail(false);
+  };
 
   const handleSetTheme = async (pageId) => {
     setLoadingSetTheme(true);
@@ -180,6 +204,30 @@ function ThemeManager({ selectedWebsiteBucket }) {
         message={error || successMessage}
       />
       <Paper sx={{ p: 4, my: 5, borderRadius: 8 }}>
+        {detailContent && (
+          <Box p={3}>
+            <Grid container spacing={3}>
+              <Paper
+                sx={{
+                  p: 4,
+                  my: 5,
+                  borderRadius: 8,
+                  width: "100%",
+                  backgroundColor: "#fffbef",
+                }}
+              >
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Typography variant="h5" gutterBottom>
+                      Current {detailContent.website || ""} Theme -{" "}
+                      {detailContent.currentTheme || ""}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+          </Box>
+        )}
         <Box p={3}>
           <Grid container spacing={3}>
             <Paper
