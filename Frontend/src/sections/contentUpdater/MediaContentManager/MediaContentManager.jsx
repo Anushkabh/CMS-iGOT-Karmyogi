@@ -12,7 +12,7 @@ import axios from "axios";
 import FolderSelect from "./FolderSelect";
 import AddNewPage from "./AddNewFolder";
 import DeletePage from "./DeleteFolder";
-import UserPage from "./TableView/view/gcp-table-content-view";
+import UserPage from "../TableView/view/gcp-table-content-view";
 import AddFileDialog from "./AddFileSection";
 
 function MediaContentManager({ selectedWebsiteBucket }) {
