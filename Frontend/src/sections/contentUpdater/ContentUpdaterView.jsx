@@ -51,7 +51,7 @@ function ContentUpdaterView() {
             </Button>
             <Box textAlign="center">
               <Typography variant="h5" gutterBottom>
-                {selectedCard} Selected
+                {selectedCard}
               </Typography>
             </Box>
           </Paper>

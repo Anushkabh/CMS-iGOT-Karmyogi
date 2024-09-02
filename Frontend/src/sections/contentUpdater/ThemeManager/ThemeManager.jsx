@@ -293,7 +293,7 @@ function ThemeManager({ selectedWebsiteBucket }) {
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <Typography variant="h5" gutterBottom>
-                    Add Themes
+                    Theme Manager
                   </Typography>
                   <FolderSelect
                     pages={pages}
