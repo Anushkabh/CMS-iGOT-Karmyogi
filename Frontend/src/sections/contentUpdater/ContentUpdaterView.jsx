@@ -148,7 +148,7 @@ function ContentUpdaterView() {
                   <img
                     style={{ width: "4rem" }}
                     alt="icon"
-                    src="/icons/glass/addWeb.png"
+                    src="/icons/glass/theme.png"
                   />
                 }
               />
