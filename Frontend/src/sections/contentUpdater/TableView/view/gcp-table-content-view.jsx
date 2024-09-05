@@ -17,7 +17,7 @@ import UserTableHead from "../website-table-head";
 import UserTableToolbar from "../website-table-toolbar";
 import AppWidgetSummary from "../app-widget-summary";
 import { applyFilter, getComparator } from "../utils";
-import AddFileDialog from "../../AddFileSection";
+import AddFileDialog from "../../MediaContentManager/AddFileSection";
 
 // ----------------------------------------------------------------------
 

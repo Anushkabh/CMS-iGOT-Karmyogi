@@ -12,36 +12,80 @@ import axios from "axios";
 import FolderSelect from "./FolderSelect";
 import AddNewPage from "./AddNewFolder";
 import DeletePage from "./DeleteFolder";
-import UserPage from "../TableView/view/gcp-table-content-view";
-import AddFileDialog from "./AddFileSection";
+import UserPage from "../TableView/view/gcp-table-theme-content-view";
 
-function MediaContentManager({ selectedWebsiteBucket }) {
+function ThemeManager({ selectedWebsiteBucket }) {
   const [contentFetchedPageId, setContentFetchedPageId] = useState("");
   const [selectedPageId, setSelectedPageId] = useState("");
+  const [selectedThemeId, setSelectedThemeId] = useState("");
   const [folderContent, setFolderContent] = useState(null);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [pages, setPages] = useState([]);
+  const [pagesFiltered, setPagesFiltered] = useState([]);
   const [showAddPageDialog, setShowAddPageDialog] = useState(false);
   const [showAddNewFileDialog, setShowAddNewFileDialog] = useState(false);
   const [showDeletePageDialog, setShowDeletePageDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingSetTheme, setLoadingSetTheme] = useState(false);
+  const [loadingFetchContent, setLoadingFetchContent] = useState(false);
+
+  // State for new detail fetching
+  const [loadingFetchDetail, setLoadingFetchDetail] = useState(false);
+  const [detailContent, setDetailContent] = useState(null);
 
   useEffect(() => {
     fetchPages();
+    fetchDetail();
   }, [selectedWebsiteBucket]);
 
   useEffect(() => {
     setShowAddNewFileDialog(false);
     setFolderContent(null);
+  }, [selectedPageId, setSelectedThemeId]);
 
-  }, [selectedPageId]);
-
-  const fetchContent = async (pageId) => {
-    setLoading(true);
+  // New function to fetch details
+  const fetchDetail = async () => {
+    setLoadingFetchDetail(true);
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/web_media_gcp/currfolders/${selectedWebsiteBucket}/${pageId}`
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/getThemeDetails/${selectedWebsiteBucket}`
+      );
+      console.log(response.data);
+      setDetailContent(response.data);
+      setSuccessMessage("Details fetched successfully!");
+    } catch (error) {
+      console.error("Error fetching details:", error);
+      setError("Failed to fetch details. Please try again.");
+    }
+    setLoadingFetchDetail(false);
+  };
+
+  const handleSetTheme = async (pageId) => {
+    setLoadingSetTheme(true);
+    try {
+      const response = await axios.post(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/setTheme/${selectedWebsiteBucket}/${pageId}`
+      );
+      setSuccessMessage("Theme set successfully!");
+      console.log("Theme set for page:", pageId);
+    } catch (error) {
+      console.error("Error setting theme:", error);
+      setError("Failed to set theme. Please try again.");
+    }
+    setLoadingSetTheme(false);
+  };
+
+  const fetchContent = async (pageId) => {
+    setLoadingFetchContent(true);
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/currfolders/${selectedWebsiteBucket}/${pageId}`
       );
       console.log(pageId);
       setContentFetchedPageId(pageId);
@@ -54,16 +98,24 @@ function MediaContentManager({ selectedWebsiteBucket }) {
       console.error("Error fetching content:", error);
       setError("Failed to fetch content. Please try again.");
     }
-    setLoading(false);
+    setLoadingFetchContent(false);
   };
 
   const fetchPages = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/web_media_gcp/currfolders/${selectedWebsiteBucket}`
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/currfolders/${selectedWebsiteBucket}`
       );
+      const filteredPages = response.data.filter(
+        (page) => page !== "current_theme"
+      );
+
+      setPagesFiltered(filteredPages);
       setPages(response.data);
       setSelectedPageId(response.data[0] || "");
+      setSelectedThemeId(filteredPages[0] || "");
     } catch (error) {
       console.error("Error fetching pages:", error);
       setError("Failed to fetch pages. Please try again.");
@@ -71,10 +123,12 @@ function MediaContentManager({ selectedWebsiteBucket }) {
   };
 
   const handleCreateNewPage = async (newPageId) => {
-    setLoading(true);
+    setLoadingSetTheme(true);
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/web_media_gcp/media/folders/${selectedWebsiteBucket}`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}`,
         {
           folderName: newPageId,
         }
@@ -85,13 +139,15 @@ function MediaContentManager({ selectedWebsiteBucket }) {
       console.error("Error creating new page:", error);
       setError("Failed to create new folder. Please try again.");
     }
-    setLoading(false);
+    setLoadingSetTheme(false);
   };
   const handleCreateNewFile = async (newPageId) => {
-    setLoading(true);
+    setLoadingFetchContent(true);
     try {
       await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/web_media_gcp/media/folders/${selectedWebsiteBucket}`,
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}`,
         {
           folderName: newPageId,
         }
@@ -102,23 +158,26 @@ function MediaContentManager({ selectedWebsiteBucket }) {
       console.error("Error creating new page:", error);
       setError("Failed to create new folder. Please try again.");
     }
-    setLoading(false);
+    setLoadingFetchContent(false);
   };
 
   const handleDeletePage = async (pageId) => {
-    setLoading(true);
+    setLoadingSetTheme(true);
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/web_media_gcp/media/folders/${selectedWebsiteBucket}/${pageId}`
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}/${pageId}`
       );
       setSuccessMessage("Folder deleted successfully!");
       fetchPages(); // Refresh the list of pages
       setSelectedPageId(pages[0] || "");
+      setSelectedThemeId(pages[0] || "");
     } catch (error) {
       console.error("Error deleting page:", error);
       setError("Failed to delete folder. Please try again.");
     }
-    setLoading(false);
+    setLoadingSetTheme(false);
   };
 
   const handleCloseSnackbar = () => {
@@ -130,6 +189,10 @@ function MediaContentManager({ selectedWebsiteBucket }) {
     const pageId = event.target.value;
     setSelectedPageId(pageId);
   };
+  const handleThemeChange = (event) => {
+    const pageId = event.target.value;
+    setSelectedThemeId(pageId);
+  };
 
   return (
     <div>
@@ -139,6 +202,81 @@ function MediaContentManager({ selectedWebsiteBucket }) {
         onClose={handleCloseSnackbar}
         message={error || successMessage}
       />
+      <Paper sx={{ p: 4, my: 5, borderRadius: 8 }}>
+        {detailContent && (
+          <Box p={3}>
+            <Grid container spacing={3}>
+              <Paper
+                sx={{
+                  p: 4,
+                  my: 5,
+                  borderRadius: 8,
+                  width: "100%",
+                  backgroundColor: "#fffbef",
+                }}
+              >
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Typography variant="h5" gutterBottom>
+                      Current {detailContent.website || ""} Theme -{" "}
+                      {detailContent.currentTheme || ""}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+          </Box>
+        )}
+        <Box p={3}>
+          <Grid container spacing={3}>
+            <Paper
+              sx={{
+                p: 4,
+                my: 5,
+                borderRadius: 8,
+                width: "100%",
+                backgroundColor: "#fffbef",
+              }}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <Typography variant="h5" gutterBottom>
+                    Set Theme
+                  </Typography>
+                  <FolderSelect
+                    pages={pagesFiltered}
+                    selectedPageId={selectedThemeId}
+                    handlePageChange={handlePageChange}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Grid container spacing={2}>
+                    <Grid
+                      container
+                      justifyContent="space-between"
+                      alignItems="center"
+                      px={2}
+                    >
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => handleSetTheme(selectedPageId)}
+                        disabled={!selectedThemeId || loadingSetTheme}
+                      >
+                        {loadingSetTheme ? (
+                          <CircularProgress size={24} />
+                        ) : (
+                          "Set Theme"
+                        )}
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        </Box>
+      </Paper>
       <Paper sx={{ p: 4, my: 5, borderRadius: 8 }}>
         <Box p={3}>
           <Grid container spacing={3}>
@@ -154,7 +292,7 @@ function MediaContentManager({ selectedWebsiteBucket }) {
               <Grid container spacing={3}>
                 <Grid item xs={12}>
                   <Typography variant="h5" gutterBottom>
-                    Select Folder
+                    Theme Manager
                   </Typography>
                   <FolderSelect
                     pages={pages}
@@ -174,9 +312,9 @@ function MediaContentManager({ selectedWebsiteBucket }) {
                         variant="contained"
                         color="success"
                         onClick={() => fetchContent(selectedPageId)}
-                        disabled={!selectedPageId || loading}
+                        disabled={!selectedPageId || loadingFetchContent}
                       >
-                        {loading ? (
+                        {loadingFetchContent ? (
                           <CircularProgress size={24} />
                         ) : (
                           "Fetch Content"
@@ -205,6 +343,7 @@ function MediaContentManager({ selectedWebsiteBucket }) {
           </Grid>
         </Box>
       </Paper>
+
       <AddNewPage
         selectedWebsiteBucket={selectedWebsiteBucket}
         open={showAddPageDialog}
@@ -221,8 +360,8 @@ function MediaContentManager({ selectedWebsiteBucket }) {
 
       {folderContent && (
         <UserPage
-        fetchContent={fetchContent}
-        setSuccessMessage={setSuccessMessage}
+          fetchContent={fetchContent}
+          setSuccessMessage={setSuccessMessage}
           showAddNewFileDialog={showAddNewFileDialog}
           selectedWebsiteBucket={selectedWebsiteBucket}
           handleCreateNewFile={handleCreateNewFile}
@@ -235,4 +374,4 @@ function MediaContentManager({ selectedWebsiteBucket }) {
   );
 }
 
-export default MediaContentManager;
+export default ThemeManager;

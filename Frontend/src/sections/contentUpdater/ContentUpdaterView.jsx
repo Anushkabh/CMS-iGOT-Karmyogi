@@ -5,6 +5,7 @@ import { Container, Box, Typography, Paper, Grid, Button } from "@mui/material";
 import AppWidgetSummary from "./AppWidgetSummary";
 import TextManagerView from "./TextContentManager/TextManagerView";
 import MediaContentManager from "./MediaContentManager/MediaContentManager";
+import ThemeManager from "./ThemeManager/ThemeManager";
 
 function ContentUpdaterView() {
   const [websites, setWebsites] = useState([]);
@@ -50,7 +51,7 @@ function ContentUpdaterView() {
             </Button>
             <Box textAlign="center">
               <Typography variant="h5" gutterBottom>
-                {selectedCard} Selected
+                {selectedCard}
               </Typography>
             </Box>
           </Paper>
@@ -63,6 +64,9 @@ function ContentUpdaterView() {
               selectedWebsiteBucket={selectedWebsiteBucket}
             />
           )}
+          {selectedCard === "Theme Manager" && (
+            <ThemeManager selectedWebsiteBucket={selectedWebsiteBucket} />
+          )}
         </>
       ) : (
         <>
@@ -71,7 +75,6 @@ function ContentUpdaterView() {
               Content Updater
             </Typography>
             <WebsiteSelector
-              // bucketName={bucketName}
               setSelectedWebsiteBucket={setSelectedWebsiteBucket}
               websites={websites}
               selectedWebsite={selectedWebsite}
@@ -126,6 +129,26 @@ function ContentUpdaterView() {
                     style={{ width: "4rem" }}
                     alt="icon"
                     src="/icons/glass/addWeb.png"
+                  />
+                }
+              />
+            </Grid>
+            <Grid item xs={10} sm={6} md={5}>
+              <AppWidgetSummary
+                title="Theme Manager"
+                color="info"
+                sx={{
+                  cursor: "pointer",
+                  "&:hover": {
+                    cursor: "pointer",
+                  },
+                }}
+                onClick={() => handleCardClick("Theme Manager")}
+                icon={
+                  <img
+                    style={{ width: "4rem" }}
+                    alt="icon"
+                    src="/icons/glass/theme.png"
                   />
                 }
               />
