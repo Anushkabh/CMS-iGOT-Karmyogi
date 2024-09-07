@@ -19,6 +19,11 @@ const navConfig = [
     path: "/ContentUpdater",
     icon: "doc",
   },
+  // {
+  //   title: "My Account",
+  //   path: "/myAccount",
+  //   icon: "doc",
+  // },
 ];
 
 export default navConfig;

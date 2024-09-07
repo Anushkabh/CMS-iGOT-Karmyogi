@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom"; // Import useNavigate from react-router-dom
 
 import Box from "@mui/material/Box";
 import Avatar from "@mui/material/Avatar";
@@ -12,12 +13,11 @@ import IconButton from "@mui/material/IconButton";
 const MENU_OPTIONS = [
   {
     label: "Home",
+    path: "/",
   },
   {
     label: "Profile",
-  },
-  {
-    label: "Settings",
+    path: "/myAccount",
   },
 ];
 
@@ -25,19 +25,25 @@ const MENU_OPTIONS = [
 
 export default function AccountPopover({ userData }) {
   const [open, setOpen] = useState(null);
+  const navigate = useNavigate(); // Initialize the useNavigate hook
 
   const handleOpen = (event) => {
     setOpen(event.currentTarget);
   };
 
-  const handleLogout = (event) => {
+  const handleClose = () => {
+    setOpen(null);
+  };
+
+  const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.reload();
     setOpen(null);
   };
 
-  const handleClose = () => {
-    setOpen(null);
+  const handleMenuClick = (path) => {
+    navigate(path); // Navigate to the selected path
+    handleClose(); // Close the popover after navigation
   };
 
   if (!userData) {
@@ -84,7 +90,10 @@ export default function AccountPopover({ userData }) {
         <Divider sx={{ borderStyle: "dashed" }} />
 
         {MENU_OPTIONS.map((option) => (
-          <MenuItem key={option.label} onClick={handleClose}>
+          <MenuItem
+            key={option.label}
+            onClick={() => handleMenuClick(option.path)} // Call handleMenuClick with the path
+          >
             {option.label}
           </MenuItem>
         ))}
