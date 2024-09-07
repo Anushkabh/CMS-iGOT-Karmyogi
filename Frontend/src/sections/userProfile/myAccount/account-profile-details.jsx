@@ -18,6 +18,9 @@ export const AccountProfileDetails = ({ userDetails }) => {
     phone: userDetails.phone,
     email: userDetails.email,
   });
+  
+  // State to track if form values have changed
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Update values if userDetails changes
   useEffect(() => {
@@ -28,6 +31,15 @@ export const AccountProfileDetails = ({ userDetails }) => {
     });
   }, [userDetails]);
 
+  // Check if form values have changed from initial user details
+  useEffect(() => {
+    setHasChanges(
+      values.name !== userDetails.name ||
+      values.email !== userDetails.email ||
+      values.phone !== userDetails.phone
+    );
+  }, [values, userDetails]);
+
   // Handle input changes
   const handleChange = useCallback((event) => {
     setValues((prevState) => ({
@@ -36,13 +48,22 @@ export const AccountProfileDetails = ({ userDetails }) => {
     }));
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.reload(); 
+  };
+
   // Handle form submission
   const handleSubmit = useCallback(async (event) => {
     event.preventDefault();
 
+    if (!hasChanges) {
+      alert('No changes detected.');
+      return; 
+    }
+
     try {
       const token = localStorage.getItem('token');
-
       const response = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/auth/usersDetailUpdate/${userDetails._id}`,
         {
@@ -55,17 +76,17 @@ export const AccountProfileDetails = ({ userDetails }) => {
             Authorization: `Bearer ${token}`,
           },
         }
-
       );
 
       if (response.status === 200) {
         alert('User details updated successfully!');
+        handleLogout(); 
       }
     } catch (error) {
       console.error('Error updating user details:', error);
       alert('Failed to update user details.');
     }
-  }, [values, userDetails.id]);
+  }, [values, userDetails, hasChanges]);
 
   return (
     <form autoComplete="off" noValidate onSubmit={handleSubmit}>
@@ -111,7 +132,9 @@ export const AccountProfileDetails = ({ userDetails }) => {
         </CardContent>
 
         <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button type="submit" variant="contained">Save details</Button>
+          <Button type="submit" variant="contained" disabled={!hasChanges}>
+            Save details
+          </Button>
         </CardActions>
       </Card>
     </form>

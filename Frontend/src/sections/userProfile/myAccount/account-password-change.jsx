@@ -22,6 +22,12 @@ const AccountPasswordChange = ({ userID }) => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.reload();
+    setOpen(null);
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
@@ -51,7 +57,8 @@ const AccountPasswordChange = ({ userID }) => {
           },
         }
       );
-
+      
+      handleLogout();
       console.log("Password change successful:", response.data);
       setSnackbarMessage(
         "Password changed successfully. Changes will reflect next time you logIn"
