@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback } from 'react';
-
 import {
   Box,
   Card,
@@ -11,29 +10,25 @@ import {
   CardActions,
   Unstable_Grid2 as Grid,
 } from '@mui/material';
-
-// const user = window.sessionStorage.getItem("user");
+import axios from 'axios'; // You can also use fetch if you prefer
 
 export const AccountProfileDetails = ({ userDetails }) => {
-  console.log('edr hi ');
-  console.log(userDetails);
-  console.log(userDetails);
   const [values, setValues] = useState({
     name: userDetails.name,
     phone: userDetails.phone,
     email: userDetails.email,
-    address: userDetails.address,
   });
 
+  // Update values if userDetails changes
   useEffect(() => {
     setValues({
       name: userDetails.name,
       phone: userDetails.phone,
       email: userDetails.email,
-      address: userDetails.address,
     });
   }, [userDetails]);
 
+  // Handle input changes
   const handleChange = useCallback((event) => {
     setValues((prevState) => ({
       ...prevState,
@@ -41,26 +36,51 @@ export const AccountProfileDetails = ({ userDetails }) => {
     }));
   }, []);
 
-  const handleSubmit = useCallback((event) => {
+  // Handle form submission
+  const handleSubmit = useCallback(async (event) => {
     event.preventDefault();
-  }, []);
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/usersDetailUpdate/${userDetails._id}`,
+        {
+          name: values.name,
+          phone: values.phone,
+          email: values.email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+
+      );
+
+      if (response.status === 200) {
+        alert('User details updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating user details:', error);
+      alert('Failed to update user details.');
+    }
+  }, [values, userDetails.id]);
 
   return (
     <form autoComplete="off" noValidate onSubmit={handleSubmit}>
       <Card>
-        <CardHeader subheader="Please contact admin if your details are wrong" title="Profile" />
+        <CardHeader subheader="Please update your details below" title="Profile" />
         <CardContent sx={{ pt: 0 }}>
           <Box sx={{ m: 1.5 }}>
             <Grid container spacing={3}>
               <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
-                  // helperText="Please specify the first name"
                   label="Name"
                   name="name"
                   onChange={handleChange}
                   required
-                  disabled
                   value={values.name}
                 />
               </Grid>
@@ -71,9 +91,7 @@ export const AccountProfileDetails = ({ userDetails }) => {
                   label="Email Address"
                   name="email"
                   onChange={handleChange}
-                  // required
-                  // disabled
-                  disabled
+                  required
                   value={values.email}
                 />
               </Grid>
@@ -81,10 +99,10 @@ export const AccountProfileDetails = ({ userDetails }) => {
               <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="phone"
+                  label="Phone"
                   name="phone"
                   onChange={handleChange}
-                  disabled
+                  required
                   value={values.phone}
                 />
               </Grid>
@@ -93,7 +111,7 @@ export const AccountProfileDetails = ({ userDetails }) => {
         </CardContent>
 
         <CardActions sx={{ justifyContent: 'flex-end' }}>
-          <Button variant="contained">Save details</Button>
+          <Button type="submit" variant="contained">Save details</Button>
         </CardActions>
       </Card>
     </form>
@@ -101,5 +119,5 @@ export const AccountProfileDetails = ({ userDetails }) => {
 };
 
 AccountProfileDetails.propTypes = {
-  userDetails: PropTypes.any,
+  userDetails: PropTypes.any.isRequired,
 };

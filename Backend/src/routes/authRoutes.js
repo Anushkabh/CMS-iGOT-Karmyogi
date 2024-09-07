@@ -219,5 +219,29 @@ router.post("/changePassword", authMiddleware(["user", "admin", "super admin"]),
   }
 });
 
+router.put("/usersDetailUpdate/:id", authMiddleware(["user", "admin", "super admin"]), async (req, res) => {
+  const { name, email, phone } = req.body;
+
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update user fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    // Save the updated user
+    await user.save();
+
+    res.status(200).json({ message: "User updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 module.exports = router;
