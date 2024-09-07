@@ -165,4 +165,26 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Fetch user details
+router.get("/userDetails", authMiddleware(["user", "admin", "super admin"]), async (req, res) => {
+  try {
+    // Get the user email from the decoded token (handled by authMiddleware)
+    const email = req.user.email;
+
+    // Find the user by email in the database
+    const user = await User.findOne({ email });
+
+    // If user not found, return an error
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return the user's details
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user details" });
+  }
+});
+
+
 module.exports = router;
