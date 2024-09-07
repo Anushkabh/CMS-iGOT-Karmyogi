@@ -47,7 +47,7 @@ const AccountPasswordChange = ({ userID }) => {
         },
         {
           headers: {
-            Authorization: `${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );

@@ -186,5 +186,38 @@ router.get("/userDetails", authMiddleware(["user", "admin", "super admin"]), asy
   }
 });
 
+// Change Password
+router.post("/changePassword", authMiddleware(["user", "admin", "super admin"]), async (req, res) => {
+  const { userID, oldPassword, newPassword } = req.body;
+
+  if (!userID || !oldPassword || !newPassword) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    const user = await User.findById(userID);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    
+    if (!isOldPasswordValid) {
+      return res.status(401).json({ message: "Old password is incorrect" });
+    }
+
+    const saltRounds = 10;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to change password" });
+  }
+});
+
 
 module.exports = router;
