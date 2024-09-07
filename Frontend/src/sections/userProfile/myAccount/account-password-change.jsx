@@ -1,7 +1,7 @@
-import axios from 'axios';
-import PropTypes from 'prop-types';
-import React, { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
+import axios from "axios";
+import PropTypes from "prop-types";
+import React, { useState } from "react";
+import { Helmet } from "react-helmet-async";
 
 import {
   Box,
@@ -13,33 +13,33 @@ import {
   Typography,
   CardContent,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 
 const AccountPasswordChange = ({ userID }) => {
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      setSnackbarMessage('New passwords do not match.');
+      setSnackbarMessage("New passwords do not match.");
       return;
     }
 
-    if (!window.confirm('Are you sure you want to change your password?')) {
+    if (!window.confirm("Are you sure you want to change your password?")) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await axios.post(
-        'http://localhost:3001/auth/changePassword',
+        `${import.meta.env.VITE_BACKEND_URL}/auth/changePassword`,
         {
           userID,
           oldPassword,
@@ -52,15 +52,17 @@ const AccountPasswordChange = ({ userID }) => {
         }
       );
 
-      console.log('Password change successful:', response.data);
-      setSnackbarMessage('Password changed successfully.');
+      console.log("Password change successful:", response.data);
+      setSnackbarMessage(
+        "Password changed successfully. Changes will reflect next time you logIn"
+      );
 
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error) {
-      console.error('Error changing password:', error.response.data.error);
-      setSnackbarMessage('Failed to change password. Please try again.');
+      console.error("Error changing password:", error.response.data.error);
+      setSnackbarMessage("Failed to change password. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -112,12 +114,22 @@ const AccountPasswordChange = ({ userID }) => {
                     variant="contained"
                     color="primary"
                     disabled={isLoading}
-                    startIcon={isLoading && <CircularProgress size={20} color="inherit" />}
+                    startIcon={
+                      isLoading && (
+                        <CircularProgress size={20} color="inherit" />
+                      )
+                    }
                   >
-                    {isLoading ? 'Changing Password...' : 'Change Password'}
+                    {isLoading ? "Changing Password..." : "Change Password"}
                   </Button>
                   {snackbarMessage && (
-                    <p style={{ fontSize: '0.8rem', color: 'red', marginTop: '8px' }}>
+                    <p
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "red",
+                        marginTop: "8px",
+                      }}
+                    >
                       {snackbarMessage}
                     </p>
                   )}
