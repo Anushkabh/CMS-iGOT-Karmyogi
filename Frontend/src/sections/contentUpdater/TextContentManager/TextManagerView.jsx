@@ -14,7 +14,7 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
-import axios from "axios";
+import api from "../../../utils/api";
 import PageSelect from "./PageSelect";
 import Dialogs from "./Dialogs";
 import { diffChars } from "diff";
@@ -44,7 +44,7 @@ function TextManagerView({selectedWebsiteBucket}) {
 
   const fetchPages = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/web_gcp/folders/${selectedWebsiteBucket}`);
+      const response = await api.get(`/web_gcp/folders/${selectedWebsiteBucket}`);
       setPages(response.data);
       setSelectedPageId(response.data[0] || "");
     } catch (error) {
@@ -56,8 +56,8 @@ function TextManagerView({selectedWebsiteBucket}) {
   const fetchContent = async (pageId) => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/web_gcp/content/${selectedWebsiteBucket}/${pageId}`
+      const response = await api.get(
+        `/web_gcp/content/${selectedWebsiteBucket}/${pageId}`
       );
       const contentData = response.data;
       setContent(contentData);
@@ -93,7 +93,7 @@ function TextManagerView({selectedWebsiteBucket}) {
     setLoading(true);
     try {
       const initialContentObject = JSON.parse(initialContent);
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/web_gcp/folders/${selectedWebsiteBucket}`, {
+      await api.post(`/web_gcp/folders/${selectedWebsiteBucket}`, {
         pageId,
         initialContent: initialContentObject,
       });
@@ -109,7 +109,7 @@ function TextManagerView({selectedWebsiteBucket}) {
   const handleDeletePage = async (pageId) => {
     setLoading(true);
     try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/web_gcp/content/${selectedWebsiteBucket}/${pageId}`);
+      await api.delete(`/web_gcp/content/${selectedWebsiteBucket}/${pageId}`);
       setSuccessMessage("Page deleted successfully!");
       fetchPages(); // Refresh the list of pages
       if (pageId === selectedPageId) {
@@ -125,8 +125,8 @@ function TextManagerView({selectedWebsiteBucket}) {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/web_gcp/content/${selectedWebsiteBucket}/${selectedPageId}`,
+      await api.post(
+        `/web_gcp/content/${selectedWebsiteBucket}/${selectedPageId}`,
         content
       );
       setSuccessMessage("Content updated successfully!");

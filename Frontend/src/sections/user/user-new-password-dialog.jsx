@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../utils/api";
 import PropTypes from "prop-types";
 import React, { useState } from "react";
 
@@ -34,36 +34,22 @@ function UserNewPasswordDialog({
 
   const handleEdit = async () => {
     try {
-      const token = localStorage.getItem("token");
-
       // Send PUT request to update the user's email
-      const emailResponse = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/user/users/${id}/password`,
-        { email, password },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await api.put(
+        `/user/users/${id}/password`,
+        { email, password }
       );
 
       if (password) {
         // Send PUT request to update the user's password
-        const passwordResponse = await axios.put(
-          `${import.meta.env.VITE_BACKEND_URL}/user/users/${id}/password`,
-          { password },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        await api.put(
+          `/user/users/${id}/password`,
+          { password }
         );
-        console.log("Password updated successfully:", passwordResponse.data);
       }
 
       // Refresh users after successful edit
       fetchUsers();
-      console.log("Email updated successfully:", emailResponse.data);
     } catch (error) {
       console.error("Error editing user:", error);
       setError(error.message);

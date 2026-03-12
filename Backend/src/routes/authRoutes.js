@@ -4,34 +4,32 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 const { sendEmail } = require("./sendEmail");
-const {newUserHTMLTemplate} = require('./emailTemplates/newUserHTMLTemplate')
+const { newUserHTMLTemplate } = require("./emailTemplates/newUserHTMLTemplate");
+const { AppError } = require("../middleware/errorHandler");
+const {
+  loginValidation,
+  addSuperAdminValidation,
+  addUserValidation,
+  changePasswordValidation,
+  updateUserDetailValidation,
+} = require("../middleware/validators");
 
 const router = express.Router();
-const secretKey = "admin123";
+const secretKey = process.env.JWT_SECRET;
 
 // Super Admin Registration
-router.post("/addSuperAdmin", async (req, res) => {
-  const { name, email, phone, password } = req.body;
-
-  // Checking if all required fields are provided
-  if (!name || !email || !phone || !password) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
+router.post("/addSuperAdmin", addSuperAdminValidation, async (req, res, next) => {
   try {
-    // Checking if the provided email is already registered
+    const { name, email, phone, password } = req.body;
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists" });
+      throw new AppError("User with this email already exists", 409);
     }
 
-    // Hashing the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create a new super admin user
     const newUser = new User({
       name,
       email,
@@ -43,44 +41,31 @@ router.post("/addSuperAdmin", async (req, res) => {
 
     await newUser.save();
 
-    // Generate JWT token
     const token = jwt.sign(
-      { email: newUser.email, role: newUser.role },
+      { email: newUser.email, name: newUser.name, role: newUser.role },
       secretKey,
       { expiresIn: "1w" }
     );
 
-    res
-      .status(201)
-      .json({ message: "Super admin registered successfully", token });
+    res.status(201).json({ success: true, data: { message: "Super admin registered successfully", token } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
-// User Registration (only accessible by super admins)
-router.post("/addNewUser", authMiddleware(["super admin", "admin"]), async (req, res) => {
-  const { name, email, phone, password, role } = req.body;
-
-  // Check if all required fields are provided
-  if (!name || !email || !phone || !password || !role) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
+// User Registration (only accessible by super admins and admins)
+router.post("/addNewUser", authMiddleware(["super admin", "admin"]), addUserValidation, async (req, res, next) => {
   try {
-    // Check if the provided email is already registered
+    const { name, email, phone, password, role } = req.body;
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists" });
+      throw new AppError("User with this email already exists", 409);
     }
 
-    // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create a new user
     const newUser = new User({
       name,
       email,
@@ -89,156 +74,116 @@ router.post("/addNewUser", authMiddleware(["super admin", "admin"]), async (req,
       password: hashedPassword,
       role,
     });
-  
-    const subject = "Welcome to the iGOT KarmaYogi!";
-    
-    const userEmailTemplateHtml = newUserHTMLTemplate({name,email,phone,password,role})
 
-    const emailSend = await sendEmail(email,subject,userEmailTemplateHtml);
+    const subject = "Welcome to the iGOT KarmaYogi!";
+    const userEmailTemplateHtml = newUserHTMLTemplate({ name, email, phone, password, role });
+    const emailSend = await sendEmail(email, subject, userEmailTemplateHtml);
 
     if (!emailSend) {
-      console.log("Failed to send email & adding user");
-      return res
-      .status(500)
-      .json({ error: "Failed to send email & adding user" });
+      throw new AppError("Failed to send welcome email", 500);
     }
-    
+
     await newUser.save();
 
-    // Generating JWT token
     const token = jwt.sign(
-      { email: newUser.email, role: newUser.role },
+      { email: newUser.email, name: newUser.name, role: newUser.role },
       secretKey,
       { expiresIn: "1w" }
     );
 
-    res.status(201).json({ message: "User registered successfully", token });
+    res.status(201).json({ success: true, data: { message: "User registered successfully", token } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
 // User Login
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  // Check if email and password are provided
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
-  }
-
+router.post("/login", loginValidation, async (req, res, next) => {
   try {
-    // Find the user by email
+    const { email, password } = req.body;
+
     const user = await User.findOne({ email });
-
-    // If user not found, return error
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw new AppError("Invalid email or password", 401);
     }
 
-    // Check if the user is active
     if (user.status !== "active") {
-      return res.status(403).json({ message: "User account is not active" });
+      throw new AppError("User account is not active", 403);
     }
 
-    // Compare password
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    // If password is invalid, return error
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid password" });
+      throw new AppError("Invalid email or password", 401);
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { name: user.name, email: user.email, role: user.role },
       secretKey,
-      {
-        expiresIn: "1w",
-      }
+      { expiresIn: "1w" }
     );
 
-    // Return token
-    res.status(200).json({ message: "Login successful", token });
+    res.status(200).json({ success: true, data: { message: "Login successful", token } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
 // Fetch user details
-router.get("/userDetails", authMiddleware(["user", "admin", "super admin"]), async (req, res) => {
+router.get("/userDetails", authMiddleware(["editor", "admin", "super admin"]), async (req, res, next) => {
   try {
-    // Get the user email from the decoded token (handled by authMiddleware)
-    const email = req.user.email;
-
-    // Find the user by email in the database
-    const user = await User.findOne({ email });
-
-    // If user not found, return an error
+    const user = await User.findOne({ email: req.user.email }).select("-password");
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw new AppError("User not found", 404);
     }
 
-    // Return the user's details
-    res.status(200).json({ user });
+    res.status(200).json({ success: true, data: { user } });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch user details" });
+    next(error);
   }
 });
 
 // Change Password
-router.post("/changePassword", authMiddleware(["user", "admin", "super admin"]), async (req, res) => {
-  const { userID, oldPassword, newPassword } = req.body;
-
-  if (!userID || !oldPassword || !newPassword) {
-    return res.status(400).json({ message: "All fields are required" });
-  }
-
+router.post("/changePassword", authMiddleware(["editor", "admin", "super admin"]), changePasswordValidation, async (req, res, next) => {
   try {
-    const user = await User.findById(userID);
+    const { userID, oldPassword, newPassword } = req.body;
 
+    const user = await User.findById(userID);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw new AppError("User not found", 404);
     }
 
     const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
-    
     if (!isOldPasswordValid) {
-      return res.status(401).json({ message: "Old password is incorrect" });
+      throw new AppError("Old password is incorrect", 401);
     }
 
     const saltRounds = 10;
-    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
-
-    user.password = hashedNewPassword;
+    user.password = await bcrypt.hash(newPassword, saltRounds);
     await user.save();
 
-    res.status(200).json({ message: "Password changed successfully" });
+    res.status(200).json({ success: true, data: { message: "Password changed successfully" } });
   } catch (error) {
-    res.status(500).json({ error: "Failed to change password" });
+    next(error);
   }
 });
 
-router.put("/usersDetailUpdate/:id", authMiddleware(["user", "admin", "super admin"]), async (req, res) => {
-  const { name, email, phone } = req.body;
-
+// Update user details
+router.put("/usersDetailUpdate/:id", authMiddleware(["editor", "admin", "super admin"]), updateUserDetailValidation, async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      throw new AppError("User not found", 404);
     }
 
-    // Update user fields
+    const { name, email, phone } = req.body;
     if (name) user.name = name;
     if (email) user.email = email;
     if (phone) user.phone = phone;
-    // Save the updated user
     await user.save();
 
-    res.status(200).json({ message: "User updated successfully" });
+    res.status(200).json({ success: true, data: { message: "User updated successfully" } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 

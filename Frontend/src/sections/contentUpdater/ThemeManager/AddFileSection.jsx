@@ -13,7 +13,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { CloudUpload, Delete, CheckCircle } from "@mui/icons-material";
-import axios from "axios";
+import api from "../../../utils/api";
 
 function AddFileSection({setSuccessMessage,fetchContent, selectedWebsiteBucket, selectedPageId }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -53,8 +53,8 @@ function AddFileSection({setSuccessMessage,fetchContent, selectedWebsiteBucket, 
       }));
 
       try {
-        await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/theme_manager_Store_gcp/media/upload/${selectedWebsiteBucket}/${selectedPageId}`,
+        await api.post(
+          `/theme_manager_Store_gcp/media/upload/${selectedWebsiteBucket}/${selectedPageId}`,
           formData,
           {
             headers: {

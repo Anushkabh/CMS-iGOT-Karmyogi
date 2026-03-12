@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import WebsiteSelector from "./WebsiteSelector";
 import { Container, Box, Typography, Paper, Grid, Button } from "@mui/material";
 import AppWidgetSummary from "./AppWidgetSummary";
@@ -16,12 +16,9 @@ function ContentUpdaterView() {
   useEffect(() => {
     const fetchWebsites = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/website`
-        );
+        const response = await api.get("/website");
         setWebsites(response.data);
         if (response.data.length > 0) {
-          console.log(response);
           setSelectedWebsite(response.data[0].url);
           setSelectedWebsiteBucket(response.data[0].bucketName);
         }

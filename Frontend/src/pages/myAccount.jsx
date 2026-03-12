@@ -1,6 +1,7 @@
-import axios from 'axios';
 import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect } from 'react';
+
+import api from '../utils/api';
 
 import { Box, Stack, Container, Typography, Unstable_Grid2 as Grid } from '@mui/material';
 
@@ -14,17 +15,7 @@ const AccountPage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('token');
-
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/auth/userDetails`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log('response');
-        console.log('response');
-        console.log('response');
-        console.log(response.data.user);
+        const response = await api.get('/auth/userDetails');
         setUserDetails(response.data.user);
       } catch (error) {
         console.error('Error fetching user details:', error);

@@ -10,7 +10,7 @@ import {
   CardActions,
   Unstable_Grid2 as Grid,
 } from '@mui/material';
-import axios from 'axios'; // You can also use fetch if you prefer
+import api from '../../../utils/api';
 
 export const AccountProfileDetails = ({ userDetails }) => {
   const [values, setValues] = useState({
@@ -63,18 +63,12 @@ export const AccountProfileDetails = ({ userDetails }) => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/auth/usersDetailUpdate/${userDetails._id}`,
+      const response = await api.put(
+        `/auth/usersDetailUpdate/${userDetails._id}`,
         {
           name: values.name,
           phone: values.phone,
           email: values.email,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 

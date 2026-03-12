@@ -1,7 +1,8 @@
-import axios from "axios";
 import PropTypes from "prop-types";
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async";
+
+import api from "../../../utils/api";
 
 import {
   Box,
@@ -43,23 +44,13 @@ const AccountPasswordChange = ({ userID }) => {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/auth/changePassword`,
-        {
-          userID,
-          oldPassword,
-          newPassword,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
+      const response = await api.post("/auth/changePassword", {
+        userID,
+        oldPassword,
+        newPassword,
+      });
+
       handleLogout();
-      console.log("Password change successful:", response.data);
       setSnackbarMessage(
         "Password changed successfully. Changes will reflect next time you logIn"
       );
@@ -68,7 +59,6 @@ const AccountPasswordChange = ({ userID }) => {
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
-      console.error("Error changing password:", error.response.data.error);
       setSnackbarMessage("Failed to change password. Please try again.");
     } finally {
       setIsLoading(false);

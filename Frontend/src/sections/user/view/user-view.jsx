@@ -1,5 +1,6 @@
-import axios from "axios";
 import { useState, useEffect, useCallback } from "react";
+
+import api from "../../../utils/api";
 
 import { Grid } from "@mui/material";
 import Card from "@mui/material/Card";
@@ -54,15 +55,8 @@ export default function UserPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get("/user/users");
       setusers(response.data.users);
-      console.log(response.data);
-      console.log("users Here:", response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
     }

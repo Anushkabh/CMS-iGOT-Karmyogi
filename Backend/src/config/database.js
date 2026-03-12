@@ -1,5 +1,6 @@
-const mongoose = require('mongoose');
-require('dotenv').config(); // Load environment variables from .env file
+const mongoose = require("mongoose");
+const logger = require("../utils/logger");
+require("dotenv").config();
 
 const mongoURI = process.env.MONGO_URI;
 
@@ -9,10 +10,10 @@ async function connectToDatabase() {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log('Connected to MongoDB');
+    logger.info("Connected to MongoDB");
   } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error; 
+    logger.error("MongoDB connection error", { error: error.message });
+    throw error;
   }
 }
 

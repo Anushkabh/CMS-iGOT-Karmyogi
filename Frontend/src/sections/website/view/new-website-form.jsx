@@ -1,6 +1,7 @@
-import axios from "axios";
 import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
+
+import api from "../../../utils/api";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
@@ -43,17 +44,7 @@ export default function NewWebsiteForm({ setClickedTitle }) {
     setError(null); // Reset error
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/website`,
-        websiteData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Website added successfully:", response.data);
+      const response = await api.post("/website", websiteData);
       setWebsiteData({
         name: "",
         url: "",
@@ -63,7 +54,7 @@ export default function NewWebsiteForm({ setClickedTitle }) {
       setClickedTitle("all");
     } catch (error) {
       console.error("Error adding website:", error);
-      setError(error.response.data.error);
+      setError(error.response?.data?.error || error.response?.data?.message);
     } finally {
       setLoading(false); // Stop loading
     }

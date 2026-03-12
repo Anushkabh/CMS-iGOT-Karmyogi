@@ -8,7 +8,7 @@ import {
   Box,
   CircularProgress,
 } from "@mui/material";
-import axios from "axios";
+import api from "../../../utils/api";
 import FolderSelect from "./FolderSelect";
 import AddNewPage from "./AddNewFolder";
 import DeletePage from "./DeleteFolder";
@@ -47,12 +47,9 @@ function ThemeManager({ selectedWebsiteBucket }) {
   const fetchDetail = async () => {
     setLoadingFetchDetail(true);
     try {
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/theme_manager_Store_gcp/getThemeDetails/${selectedWebsiteBucket}`
+      const response = await api.get(
+        `/theme_manager_Store_gcp/getThemeDetails/${selectedWebsiteBucket}`
       );
-      console.log(response.data);
       setDetailContent(response.data);
       setSuccessMessage("Details fetched successfully!");
     } catch (error) {
@@ -65,13 +62,10 @@ function ThemeManager({ selectedWebsiteBucket }) {
   const handleSetTheme = async (pageId) => {
     setLoadingSetTheme(true);
     try {
-      const response = await axios.post(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/theme_manager_Store_gcp/setTheme/${selectedWebsiteBucket}/${pageId}`
+      const response = await api.post(
+        `/theme_manager_Store_gcp/setTheme/${selectedWebsiteBucket}/${pageId}`
       );
       setSuccessMessage("Theme set successfully!");
-      console.log("Theme set for page:", pageId);
     } catch (error) {
       console.error("Error setting theme:", error);
       setError("Failed to set theme. Please try again.");
@@ -82,18 +76,14 @@ function ThemeManager({ selectedWebsiteBucket }) {
   const fetchContent = async (pageId) => {
     setLoadingFetchContent(true);
     try {
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/theme_manager_Store_gcp/currfolders/${selectedWebsiteBucket}/${pageId}`
+      const response = await api.get(
+        `/theme_manager_Store_gcp/currfolders/${selectedWebsiteBucket}/${pageId}`
       );
-      console.log(pageId);
       setContentFetchedPageId(pageId);
       setContentFetchedPageId(pageId);
 
       setSuccessMessage("Content Fetched successfully!");
       setFolderContent(response.data);
-      console.log(response.data);
     } catch (error) {
       console.error("Error fetching content:", error);
       setError("Failed to fetch content. Please try again.");
@@ -103,10 +93,8 @@ function ThemeManager({ selectedWebsiteBucket }) {
 
   const fetchPages = async () => {
     try {
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/theme_manager_Store_gcp/currfolders/${selectedWebsiteBucket}`
+      const response = await api.get(
+        `/theme_manager_Store_gcp/currfolders/${selectedWebsiteBucket}`
       );
       const filteredPages = response.data.filter(
         (page) => page !== "current_theme"
@@ -125,10 +113,8 @@ function ThemeManager({ selectedWebsiteBucket }) {
   const handleCreateNewPage = async (newPageId) => {
     setLoadingSetTheme(true);
     try {
-      await axios.post(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}`,
+      await api.post(
+        `/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}`,
         {
           folderName: newPageId,
         }
@@ -144,10 +130,8 @@ function ThemeManager({ selectedWebsiteBucket }) {
   const handleCreateNewFile = async (newPageId) => {
     setLoadingFetchContent(true);
     try {
-      await axios.post(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}`,
+      await api.post(
+        `/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}`,
         {
           folderName: newPageId,
         }
@@ -164,10 +148,8 @@ function ThemeManager({ selectedWebsiteBucket }) {
   const handleDeletePage = async (pageId) => {
     setLoadingSetTheme(true);
     try {
-      await axios.delete(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}/${pageId}`
+      await api.delete(
+        `/theme_manager_Store_gcp/media/folders/${selectedWebsiteBucket}/${pageId}`
       );
       setSuccessMessage("Folder deleted successfully!");
       fetchPages(); // Refresh the list of pages

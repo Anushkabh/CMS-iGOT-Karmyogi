@@ -1,6 +1,7 @@
-import axios from "axios";
 import PropTypes from "prop-types";
 import React, { useEffect, useState } from "react";
+
+import api from "../../../utils/api";
 
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
@@ -41,17 +42,7 @@ export default function NewUserForm({ setClickedTitle }) {
 
   const handleSubmit = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/auth/addNewUser`,
-        userData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("User added successfully:", response.data);
+      const response = await api.post("/auth/addNewUser", userData);
       setUserData({
         name: "",
         email: "",
@@ -63,7 +54,7 @@ export default function NewUserForm({ setClickedTitle }) {
       setClickedTitle("all");
     } catch (error) {
       console.error("Error adding user:", error);
-      setError(error.response.data.error);
+      setError(error.response?.data?.error || error.response?.data?.message);
     }
   };
 

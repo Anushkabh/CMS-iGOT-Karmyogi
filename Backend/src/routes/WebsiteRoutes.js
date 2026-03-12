@@ -1,107 +1,86 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const { Storage } = require("@google-cloud/storage");
 const Website = require("../models/Website");
+const authMiddleware = require("../middleware/authMiddleware");
+const { AppError } = require("../middleware/errorHandler");
+const { websiteValidation, mongoIdParam } = require("../middleware/validators");
+const logger = require("../utils/logger");
 
 const router = express.Router();
-
-const storage = new Storage({ keyFilename: "./key.json" });
+const storage = new Storage({ keyFilename: process.env.GCS_KEY_FILE || "./key.json" });
 
 // Create a new website and bucket
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware(["super admin", "admin"]), websiteValidation, async (req, res, next) => {
   const { name, url, bucketName } = req.body;
   try {
-    // Create bucket in GCP
     await storage.createBucket(bucketName);
 
-    // Save website in MongoDB
     const website = new Website({ name, url, bucketName });
     await website.save();
 
-    res.status(201).json(website);
+    res.status(201).json({ success: true, data: website });
   } catch (error) {
-    console.error("Error creating website and bucket:", error);
     if (error.code === 409) {
-      // Bucket already exists
-      res.status(409).json({ message: "Bucket already exists" });
-    } else {
-      res.status(500).json({ message: "Server error", error: error.message });
+      return next(new AppError("Bucket already exists", 409));
     }
+    next(error);
   }
 });
 
 // Get all websites
-router.get("/", async (req, res) => {
+router.get("/", authMiddleware(["super admin", "admin", "editor"]), async (req, res, next) => {
   try {
     const websites = await Website.find();
-    res.status(200).json(websites);
+    res.status(200).json({ success: true, data: websites });
   } catch (error) {
-    console.error("Error fetching websites:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 });
 
 // Get a single website by ID
-router.get("/:id", async (req, res) => {
+router.get("/:id", authMiddleware(["super admin", "admin", "editor"]), mongoIdParam, async (req, res, next) => {
   try {
     const website = await Website.findById(req.params.id);
-    if (!website) return res.status(404).json({ message: "Website not found" });
-    res.status(200).json(website);
+    if (!website) throw new AppError("Website not found", 404);
+    res.status(200).json({ success: true, data: website });
   } catch (error) {
-    console.error("Error fetching website:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 });
 
 // Update a website by ID
-router.put("/:id", async (req, res) => {
+router.put("/:id", authMiddleware(["super admin", "admin"]), mongoIdParam, async (req, res, next) => {
   const { bucketName } = req.body;
   try {
     const website = await Website.findById(req.params.id);
-    if (!website) return res.status(404).json({ message: "Website not found" });
+    if (!website) throw new AppError("Website not found", 404);
 
-    // Update bucket name in GCP if changed
     if (bucketName && bucketName !== website.bucketName) {
-      try {
-        // Create the new bucket
-        await storage.createBucket(bucketName);
-
-        // Delete the old bucket
-        await storage.bucket(website.bucketName).delete();
-
-        website.bucketName = bucketName;
-      } catch (error) {
-        console.error("Error updating bucket:", error);
-        return res
-          .status(500)
-          .json({ message: "Error updating bucket", error: error.message });
-      }
+      await storage.createBucket(bucketName);
+      await storage.bucket(website.bucketName).delete();
+      website.bucketName = bucketName;
     }
 
-    // Update website details in MongoDB
     Object.assign(website, req.body);
     await website.save();
 
-    res.status(200).json(website);
+    res.status(200).json({ success: true, data: website });
   } catch (error) {
-    console.error("Error updating website:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 });
 
 // Delete a website and its bucket by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware(["super admin", "admin"]), mongoIdParam, async (req, res, next) => {
   try {
     const website = await Website.findByIdAndDelete(req.params.id);
-    if (!website) return res.status(404).json({ message: "Website not found" });
+    if (!website) throw new AppError("Website not found", 404);
 
-    // Delete bucket in GCP
     await storage.bucket(website.bucketName).delete();
 
-    res.status(200).json({ message: "Website and bucket deleted" });
+    res.status(200).json({ success: true, data: { message: "Website and bucket deleted" } });
   } catch (error) {
-    console.error("Error deleting website and bucket:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    next(error);
   }
 });
 

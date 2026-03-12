@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../../utils/api";
 import PropTypes from "prop-types";
 import React, { useState } from "react";
 
@@ -38,20 +38,9 @@ function UserEditDialog({
 
   const handleEdit = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/website/${id}`,
-        userData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.put(`/website/${id}`, userData);
 
       fetchUsers();
-      console.log("User edited successfully:", response.data);
     } catch (error) {
       console.error("Error editing user:", error);
       setError(error.message);

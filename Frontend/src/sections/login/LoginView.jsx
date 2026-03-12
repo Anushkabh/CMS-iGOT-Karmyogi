@@ -1,5 +1,6 @@
-import axios from "axios";
 import { useState } from "react";
+
+import api from "../../utils/api";
 
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
@@ -30,7 +31,7 @@ export function LoginView() {
     setError(null);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/auth/login`, {
+      const response = await api.post("/auth/login", {
         email,
         password,
       });

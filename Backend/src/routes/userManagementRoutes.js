@@ -2,77 +2,66 @@ const express = require("express");
 const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 const bcrypt = require("bcrypt");
+const { AppError } = require("../middleware/errorHandler");
+const { mongoIdParam } = require("../middleware/validators");
 
 const router = express.Router();
 
 // Get All Users - depending on user's role
-router.get("/users", authMiddleware(["super admin", "admin"]), async (req, res) => {
+router.get("/users", authMiddleware(["super admin", "admin"]), async (req, res, next) => {
   try {
     let users;
     if (req.user.role === "super admin") {
-      users = await User.find().select("-password"); // Super admin sees all users
+      users = await User.find().select("-password");
     } else if (req.user.role === "admin") {
-      users = await User.find({ role: { $in: ["editor"] } }).select("-password"); // Admin sees just editors
+      users = await User.find({ role: { $in: ["editor"] } }).select("-password");
     } else {
-      users = []; // Editors see no users
+      users = [];
     }
-    res.status(200).json({ users });
+    res.status(200).json({ success: true, data: { users } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
 // Get User by ID
-router.get("/users/:id", authMiddleware(["super admin", "admin"]), async (req, res) => {
+router.get("/users/:id", authMiddleware(["super admin", "admin"]), mongoIdParam, async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select("-password"); // Exclude the password field
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.status(200).json(user);
+    const user = await User.findById(req.params.id).select("-password");
+    if (!user) throw new AppError("User not found", 404);
+    res.status(200).json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
 // Delete User by ID
-router.delete("/users/:id", authMiddleware(["super admin", "admin"]), async (req, res) => {
+router.delete("/users/:id", authMiddleware(["super admin", "admin"]), mongoIdParam, async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({ message: "User deleted successfully" });
+    if (!user) throw new AppError("User not found", 404);
+    res.status(200).json({ success: true, data: { message: "User deleted successfully" } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
 // Update User by ID
-router.put("/users/:id", authMiddleware(["super admin", "admin"]), async (req, res) => {
-  const { name, email, phone, role } = req.body;
-
+router.put("/users/:id", authMiddleware(["super admin", "admin"]), mongoIdParam, async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
+    if (!user) throw new AppError("User not found", 404);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Update user fields
+    const { name, email, phone, role } = req.body;
     if (name) user.name = name;
     if (email) user.email = email;
     if (phone) user.phone = phone;
     if (role) user.role = role;
 
-    // Save the updated user
     await user.save();
-
-    res.status(200).json({ message: "User updated successfully" });
+    res.status(200).json({ success: true, data: { message: "User updated successfully" } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
@@ -80,33 +69,24 @@ router.put("/users/:id", authMiddleware(["super admin", "admin"]), async (req, r
 router.put(
   "/users/:id/password",
   authMiddleware(["super admin"]),
-  async (req, res) => {
-    const { password } = req.body;
-
-    // Check if the password is provided
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
-    }
-
+  mongoIdParam,
+  async (req, res, next) => {
     try {
-      // Find the user by ID
-      const user = await User.findById(req.params.id);
-
-      // If user not found, return error
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      const { password } = req.body;
+      if (!password || password.length < 8) {
+        throw new AppError("Password is required and must be at least 8 characters", 400);
       }
 
-      // Hash the new password
+      const user = await User.findById(req.params.id);
+      if (!user) throw new AppError("User not found", 404);
+
       const saltRounds = 10;
       user.password = await bcrypt.hash(password, saltRounds);
-
-      // Save the updated user
       await user.save();
 
-      res.status(200).json({ message: "User password updated successfully" });
+      res.status(200).json({ success: true, data: { message: "User password updated successfully" } });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      next(error);
     }
   }
 );
@@ -115,21 +95,18 @@ router.put(
 router.put(
   "/users/:id/activate",
   authMiddleware(["super admin", "admin"]),
-  async (req, res) => {
+  mongoIdParam,
+  async (req, res, next) => {
     try {
       const user = await User.findById(req.params.id);
-
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      if (!user) throw new AppError("User not found", 404);
 
       user.status = "active";
-
       await user.save();
 
-      res.status(200).json({ message: "User activated successfully" });
+      res.status(200).json({ success: true, data: { message: "User activated successfully" } });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      next(error);
     }
   }
 );
@@ -138,21 +115,18 @@ router.put(
 router.put(
   "/users/:id/deactivate",
   authMiddleware(["super admin", "admin"]),
-  async (req, res) => {
+  mongoIdParam,
+  async (req, res, next) => {
     try {
       const user = await User.findById(req.params.id);
-
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      if (!user) throw new AppError("User not found", 404);
 
       user.status = "deactive";
-
       await user.save();
 
-      res.status(200).json({ message: "User deactivated successfully" });
+      res.status(200).json({ success: true, data: { message: "User deactivated successfully" } });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      next(error);
     }
   }
 );
